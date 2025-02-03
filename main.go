@@ -35,6 +35,41 @@ func main() {
 		link, exists := item.Attr("href")
 		if exists {
 			fmt.Printf("%d: %s - %s\n", index+1, title, "https://monmaster.gouv.fr"+link)
+			scrapeFormation("https://monmaster.gouv.fr" + link)
 		}
 	})
+}
+
+func scrapeFormation(url string) {
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Printf("Erreur lors de la requête de la formation %s : %v", url, err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("Erreur HTTP pour %s: %d", url, resp.StatusCode)
+		return
+	}
+
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	if err != nil {
+		log.Printf("Erreur lors du parsing HTML de %s : %v", url, err)
+		return
+	}
+
+	title := doc.Find("h2").First().Text()
+	capacity := doc.Find("span:contains('CAPACITÉ D’ACCUEIL')").Parent().Next().Text()
+	keyFigures := doc.Find("p.fr-icon-line-chart-line").Text()
+	doc.Find("p.fr-icon-line-chart-line").NextAllFiltered("p").Each(func(i int, s *goquery.Selection) {
+		keyFigures += "\n" + s.Text()
+	})
+
+	expectedCriteria := ""
+	doc.Find("app-bullet-list li").Each(func(i int, s *goquery.Selection) {
+		expectedCriteria += "- " + s.Text() + "\n"
+	})
+
+	fmt.Printf("\nFormation: %s\nCapacité d'accueil: %s\nChiffres clés:\n%s\nAttendus:\n%s\n", title, capacity, keyFigures, expectedCriteria)
 }
