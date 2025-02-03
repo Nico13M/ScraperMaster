@@ -35,7 +35,7 @@ func main() {
 		link, exists := item.Attr("href")
 		if exists {
 			fmt.Printf("%d: %s - %s\n", index+1, title, "https://monmaster.gouv.fr"+link)
-			scrapeFormation("https://monmaster.gouv.fr" + link)
+				scrapeFormation("https://monmaster.gouv.fr" + link)
 		}
 	})
 }
@@ -66,6 +66,7 @@ func scrapeFormation(url string) {
 		keyFigures += "\n" + s.Text()
 	})
 
+	// Simuler le clic sur "Voir plus" en récupérant tous les li y compris ceux cachés
 	expectedCriteria := ""
 	doc.Find("app-bullet-list li").Each(func(i int, s *goquery.Selection) {
 		expectedCriteria += "- " + s.Text() + "\n"
