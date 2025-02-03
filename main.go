@@ -72,5 +72,8 @@ func scrapeFormation(url string) {
 		expectedCriteria += "- " + s.Text() + "\n"
 	})
 
-	fmt.Printf("\nFormation: %s\nCapacité d'accueil: %s\nChiffres clés:\n%s\nAttendus:\n%s\n", title, capacity, keyFigures, expectedCriteria)
+	// Récupérer l'adresse
+	address := doc.Find("p:contains('Adresse')").Next().Text()
+
+	fmt.Printf("\nFormation: %s\nCapacité d'accueil: %s\nChiffres clés:\n%s\nAttendus:\n%s\nAdresse: %s\n", title, capacity, keyFigures, expectedCriteria, address)
 }
