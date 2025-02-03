@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/csv"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -11,36 +13,55 @@ import (
 const url = "https://monmaster.gouv.fr/formation?rechercheBrut=master%20psychologie%20clinique"
 
 func main() {
-	// Faire la requête HTTP
+	file, err := os.Create("formations.csv")
+	if err != nil {
+		log.Fatalf("Erreur lors de la création du fichier CSV : %v", err)
+	}
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+
+	writer.Write([]string{"Titre", "Lien", "Capacité d'accueil", "Chiffres clés", "Attendus", "Adresse", "Nombre de formations"})
+
+	count := 0
+
+
 	resp, err := http.Get(url)
 	if err != nil {
 		log.Fatalf("Erreur lors de la requête : %v", err)
 	}
 	defer resp.Body.Close()
 
-	// Vérifier le statut de la réponse
+
 	if resp.StatusCode != http.StatusOK {
 		log.Fatalf("Erreur HTTP: %d", resp.StatusCode)
 	}
 
-	// Parser la page avec goquery
+
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
 		log.Fatalf("Erreur lors du parsing HTML : %v", err)
 	}
 
-	// Sélectionner les formations et extraire les titres et liens
-	doc.Find("a[href*='/formation/']").Each(func(index int, item *goquery.Selection) {
+
+	doc.Find("a[href*='/formation/'").Each(func(index int, item *goquery.Selection) {
 		title := item.Text()
 		link, exists := item.Attr("href")
 		if exists {
-			fmt.Printf("%d: %s - %s\n", index+1, title, "https://monmaster.gouv.fr"+link)
-				scrapeFormation("https://monmaster.gouv.fr" + link)
+			fullLink := "https://monmaster.gouv.fr" + link
+			fmt.Printf("%d: %s - %s\n", index+1, title, fullLink)
+			scrapeFormation(fullLink, writer, &count)
 		}
 	})
+
+
+	writer.Write([]string{"", "", "", "", "", "", fmt.Sprintf("%d", count)})
+	writer.Flush()
 }
 
-func scrapeFormation(url string) {
+func scrapeFormation(url string, writer *csv.Writer, count *int) {
 	resp, err := http.Get(url)
 	if err != nil {
 		log.Printf("Erreur lors de la requête de la formation %s : %v", url, err)
@@ -66,14 +87,17 @@ func scrapeFormation(url string) {
 		keyFigures += "\n" + s.Text()
 	})
 
-	// Simuler le clic sur "Voir plus" en récupérant tous les li y compris ceux cachés
 	expectedCriteria := ""
 	doc.Find("app-bullet-list li").Each(func(i int, s *goquery.Selection) {
 		expectedCriteria += "- " + s.Text() + "\n"
 	})
 
-	// Récupérer l'adresse
+
 	address := doc.Find("p:contains('Adresse')").Next().Text()
 
-	fmt.Printf("\nFormation: %s\nCapacité d'accueil: %s\nChiffres clés:\n%s\nAttendus:\n%s\nAdresse: %s\n", title, capacity, keyFigures, expectedCriteria, address)
+	writer.Write([]string{title, url, capacity, keyFigures, expectedCriteria, address, ""})
+	writer.Flush()
+
+	
+	*count++
 }
