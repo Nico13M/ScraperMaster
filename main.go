@@ -1,5 +1,4 @@
-package main
-
+package main 
 import (
 	"encoding/csv"
 	"fmt"
@@ -22,11 +21,9 @@ func main() {
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
 
-
 	writer.Write([]string{"Titre", "Lien", "Capacité d'accueil", "Chiffres clés", "Attendus", "Adresse", "Nombre de formations"})
 
 	count := 0
-
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -34,19 +31,25 @@ func main() {
 	}
 	defer resp.Body.Close()
 
-
 	if resp.StatusCode != http.StatusOK {
 		log.Fatalf("Erreur HTTP: %d", resp.StatusCode)
 	}
-
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
 		log.Fatalf("Erreur lors du parsing HTML : %v", err)
 	}
 
+	// Debug: Afficher tous les liens présents sur la page
+	doc.Find("a").Each(func(index int, item *goquery.Selection) {
+		link, exists := item.Attr("href")
+		if exists {
+			fmt.Printf("Lien %d: %s\n", index+1, link)
+		}
+	})
 
-	doc.Find("a[href*='/formation/'").Each(func(index int, item *goquery.Selection) {
+	// Rechercher les formations spécifiquement
+	doc.Find("a[href*='/formation/']").Each(func(index int, item *goquery.Selection) {
 		title := item.Text()
 		link, exists := item.Attr("href")
 		if exists {
@@ -56,9 +59,10 @@ func main() {
 		}
 	})
 
-
 	writer.Write([]string{"", "", "", "", "", "", fmt.Sprintf("%d", count)})
 	writer.Flush()
+
+	fmt.Printf("Nombre total de formations récupérées : %d\n", count)
 }
 
 func scrapeFormation(url string, writer *csv.Writer, count *int) {
@@ -92,12 +96,10 @@ func scrapeFormation(url string, writer *csv.Writer, count *int) {
 		expectedCriteria += "- " + s.Text() + "\n"
 	})
 
-
 	address := doc.Find("p:contains('Adresse')").Next().Text()
 
 	writer.Write([]string{title, url, capacity, keyFigures, expectedCriteria, address, ""})
 	writer.Flush()
 
-	
 	*count++
 }
