@@ -48,13 +48,13 @@ def scrape_formation(driver, url, writer):
     time.sleep(5)
 
     try:
-        Mention = clean_text(driver.find_element(By.CSS_SELECTOR, "h1").text)
+        mention = clean_text(driver.find_element(By.CSS_SELECTOR, "h1").text)
     except:
-        Mention = ""
+        mention = ""
     try:
-        Parcours = clean_text(driver.find_element(By.CSS_SELECTOR, "h2").text)
+        parcours = clean_text(driver.find_element(By.CSS_SELECTOR, "h2").text)
     except:
-        Parcours = ""
+        parcours = ""
 
     try:
         capacity = clean_text(driver.find_element(By.XPATH, "//span[contains(text(), 'CAPACITÉ D’ACCUEIL')]//ancestor::p[1]//following-sibling::p").text)
@@ -115,7 +115,8 @@ def scrape_formation(driver, url, writer):
     # Récupération des pièces demandées
     pieces_demandees = scrape_pieces_demandees(driver, url)
 
-    writer.writerow([title, url, capacity, key_figures, expected_criteria, address, "", pieces_demandees])
+    writer.writerow([mention, parcours, url, capacity, key_figures, expected_criteria, address, pieces_demandees])
+
 
 def get_all_formations(driver, writer):
     page = 1
@@ -146,7 +147,7 @@ def get_all_formations(driver, writer):
 
 with open("formations.csv", mode="w", newline="", encoding="utf-8-sig") as file:
     writer = csv.writer(file, delimiter=";")  # Ajout du délimiteur ";"
-    writer.writerow(["Mention","Parcours", "Lien", "Capacité d'accueil", "Chiffres clés", "Attendus", "Adresse", "Nombre de formations", "Pièces demandées"])
+    writer.writerow(["Mention","Parcours", "Lien", "Capacité d'accueil", "Chiffres clés", "Attendus", "Adresse", "Pièces demandées"])
 
     options = Options()
     options.add_argument('--headless')
