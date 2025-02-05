@@ -20,9 +20,13 @@ def scrape_formation(driver, url, writer):
     time.sleep(5)
 
     try:
-        title = clean_text(driver.find_element(By.CSS_SELECTOR, "h2").text)
+        mention = clean_text(driver.find_element(By.CSS_SELECTOR, "h1").text)
     except:
-        title = ""
+        mention = ""
+    try:
+        parcours = clean_text(driver.find_element(By.CSS_SELECTOR, "h2").text)
+    except:
+        parcours = ""
 
     try:
         capacity = clean_text(driver.find_element(By.XPATH, "//span[contains(text(), 'CAPACITÉ D’ACCUEIL')]//ancestor::p[1]//following-sibling::p").text)
@@ -110,7 +114,7 @@ def get_all_formations(driver, writer):
             break
 with open("formations.csv", mode="w", newline="", encoding="utf-8-sig") as file:
     writer = csv.writer(file, delimiter=";")  # Ajout du délimiteur ";"
-    writer.writerow(["Titre", "Lien", "Capacité d'accueil", "Chiffres clés", "Attendus", "Adresse", "Nombre de formations"])
+    writer.writerow(["Mention", "Parcours", "Lien", "Capacité d'accueil", "Chiffres clés", "Attendus", "Adresse", "Nombre de formations"])
 
     options = Options()
     options.add_argument('--headless')
