@@ -53,12 +53,14 @@ def scrape_formation(driver, url, writer):
         mention = clean_text(driver.find_element(By.CSS_SELECTOR, "h1").text)
     except:
         mention = ""
+        
     try:
-    parcours = clean_text(driver.find_element(By.CSS_SELECTOR, "h2").text)
-    if "Panneau de gestion des cookies" in parcours:
-        parcours = "" 
+        parcours = clean_text(driver.find_element(By.CSS_SELECTOR, "h2").text)
+        if "Panneau de gestion des cookies" in parcours:
+            parcours = "" 
     except:
-    parcours = ""
+        parcours = ""
+
     try:
         capacity = clean_text(driver.find_element(By.XPATH, "//span[contains(text(), 'CAPACITÉ D’ACCUEIL')]//ancestor::p[1]//following-sibling::p").text)
     except:
