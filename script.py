@@ -37,7 +37,9 @@ def scrape_pieces_demandees(driver, formation_url):
             except:
                 contenu_piece = ""
 
-            pieces_data.append(f"{titre_piece}: {contenu_piece}")
+            # Vérification avant d'ajouter à la liste
+            if "Panneau de gestion des cookies" not in titre_piece:
+                pieces_data.append(f"{titre_piece}: {contenu_piece}")
     except Exception as e:
         print(f"Erreur lors de l'extraction des pièces demandées pour {formation_url}: {e}")
     
