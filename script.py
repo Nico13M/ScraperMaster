@@ -15,18 +15,42 @@ def clean_text(text):
     """ Nettoie le texte en supprimant les retours à la ligne et espaces inutiles """
     return text.replace("\n", " ").replace("\r", " ").strip()
 
+def scrape_pieces_demandees(driver, formation_url):
+    """ Récupère les pièces demandées depuis la page spécifique """
+    pieces_url = formation_url + "/piecesdemandees"
+    driver.get(pieces_url)
+    time.sleep(3)
+
+    pieces_data = []
+    
+    try:
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "h2")))
+        h2_elements = driver.find_elements(By.TAG_NAME, "h2")
+        
+        for h2 in h2_elements:
+            titre_piece = clean_text(h2.text)
+            div_sibling = h2.find_element(By.XPATH, "following-sibling::div[1]")
+            try:
+                span_element = div_sibling.find_element(By.TAG_NAME, "span")
+                hint_text_span = span_element.find_element(By.CLASS_NAME, "fr-hint-text")
+                contenu_piece = clean_text(hint_text_span.text)
+            except:
+                contenu_piece = ""
+
+            pieces_data.append(f"{titre_piece}: {contenu_piece}")
+    except Exception as e:
+        print(f"Erreur lors de l'extraction des pièces demandées pour {formation_url}: {e}")
+    
+    return " | ".join(pieces_data) if pieces_data else ""
+
 def scrape_formation(driver, url, writer):
     driver.get(url)
     time.sleep(5)
 
     try:
-        mention = clean_text(driver.find_element(By.CSS_SELECTOR, "h1").text)
+        title = clean_text(driver.find_element(By.CSS_SELECTOR, "h2").text)
     except:
-        mention = ""
-    try:
-        parcours = clean_text(driver.find_element(By.CSS_SELECTOR, "h2").text)
-    except:
-        parcours = ""
+        title = ""
 
     try:
         capacity = clean_text(driver.find_element(By.XPATH, "//span[contains(text(), 'CAPACITÉ D’ACCUEIL')]//ancestor::p[1]//following-sibling::p").text)
@@ -84,7 +108,10 @@ def scrape_formation(driver, url, writer):
     except:
         address = ""
 
-    writer.writerow([title, url, capacity, key_figures, expected_criteria, address, ""])
+    # Récupération des pièces demandées
+    pieces_demandees = scrape_pieces_demandees(driver, url)
+
+    writer.writerow([title, url, capacity, key_figures, expected_criteria, address, "", pieces_demandees])
 
 def get_all_formations(driver, writer):
     page = 1
@@ -112,9 +139,10 @@ def get_all_formations(driver, writer):
         except Exception as e:
             print("Erreur lors de la récupération des formations :", e)
             break
+
 with open("formations.csv", mode="w", newline="", encoding="utf-8-sig") as file:
     writer = csv.writer(file, delimiter=";")  # Ajout du délimiteur ";"
-    writer.writerow(["Mention", "Parcours", "Lien", "Capacité d'accueil", "Chiffres clés", "Attendus", "Adresse", "Nombre de formations"])
+    writer.writerow(["Titre", "Lien", "Capacité d'accueil", "Chiffres clés", "Attendus", "Adresse", "Nombre de formations", "Pièces demandées"])
 
     options = Options()
     options.add_argument('--headless')
